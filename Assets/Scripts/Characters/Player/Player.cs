@@ -1,75 +1,101 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : Character
 {
-    //DEBUG
-    public enum TestType
-    {
-        Rune,
-        Prayer,
-        Ritual
-    }
+    [SerializeField] private CameraAnimationInfo test;
 
-    public TestType testType;
+    public const string FILENAME = "Player";
 
-    //
-
-    private PlayerAttack selectedAttack;
+    [SerializeField] private PlayerTurnMenu attackUI;
     
-    public override void Reset()
-    {
-        Stats = LoadData("player.caster");
-        base.Reset();
-    }
+    private List<Item> items = new List<Item>();
 
-    public override void InitializeTurn()
+    protected override void StartTurn()
     {
-        // TODO: This is a temporary hardcoded attack. Should be selected through an UI of sorts.
-
-        switch (testType)
+        if (!canAttack)
         {
-                case TestType.Prayer:
-                {
-                    selectedAttack = Instantiate(Resources.Load<GameObject>("Prefabs/pf_prayer")).GetComponent<PlayerAttack>();
-                    selectedAttack.transform.parent = transform;
-                    break;
-            }
-            case TestType.Rune:
-                {        
-                    selectedAttack = Instantiate(Resources.Load<GameObject>("Prefabs/pf_rune")).GetComponent<PlayerAttack>();
-                    selectedAttack.transform.parent = transform;
-                    break;
-            }
-            case TestType.Ritual:
-                {
-                    throw new ArgumentOutOfRangeException();
-                }
-            default:
-            {
-                throw new ArgumentOutOfRangeException();
-            }
+            return;
         }
 
+        BattleManager.instance.EnqueueAction(new BattleAction(() => 
+        {
+            attackUI.CreateAttackButtons(attacks, this);
+            attackUI.CreateItemButtons(items);
+            attackUI.gameObject.SetActive(true);
+        }, 0));
+
     }
 
-    public override void HandleTurn()
+    // DEBUG
+    private void Start()
     {
-        selectedAttack.HandleInput();
+        AddItem(new HealthPotion(5));
+        AddItem(new ManaPotion(3));
+    }       
+    //
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            CameraController.instance.PlayCameraAnimation(test);
+        }
     }
 
     /// <summary>
-    /// Attacks the enemy/enemies and destroys the rune object.
+    /// Loads the character stats.
+    /// TODO: Make a better save file for the player, including its inventory, health, mana and attacks.
     /// </summary>
-    /// <param name="info">The performed attack.</param>
-    public override void PerformAttack(AttackInfo info)
+    protected override void Reset()
     {
-        BattleManager.instance.EnqueueAction(new BattleAction(() =>
+        stats = GameManager.LoadFile<CharacterData>(FILENAME + "Stats");
+
+        var saveData = GameManager.LoadFile<PlayerSaveData>(FILENAME + "Save");
+        Health = saveData.currentHealth;
+        Mana = saveData.currentMana;
+        items = saveData.items;
+    }
+
+    public void AddItem(Item item)
+    {
+        // Try increase the count if it already exists.
+        var existingItem = items.Find(i => i.name == item.name);
+        if (existingItem != null)
         {
-            DebugHelper.instance.AddMessage(string.Format("Player attacked for {0} damage", info.damage), 5);
-            BattleManager.instance.AttackEnemies(info);
-            Destroy(selectedAttack.gameObject);
-            BattleManager.instance.DequeueCharacter();
-        }, 2));
+            existingItem.amount += item.amount;
+        }
+        // Else add it as a new item.
+        else
+        {
+            items.Add(item);
+        }
+    }
+
+    public void RemoveItem(Item item)
+    {
+        items.Remove(item);
+    }
+
+    public void Save()
+    {
+        GameManager.SaveFile(FILENAME + "Stats", stats);
+        GameManager.SaveFile(FILENAME + "Save", new PlayerSaveData(Health, Mana, items));
+    }
+}
+
+[Serializable]
+public struct PlayerSaveData
+{
+    public int currentHealth;
+    public int currentMana;
+    public List<Item> items;
+
+    public PlayerSaveData(int currentHealth, int currentMana, List<Item> items)
+    {
+        this.currentHealth = currentHealth;
+        this.currentMana = currentMana;
+        this.items = items;
     }
 }

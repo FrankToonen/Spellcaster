@@ -1,22 +1,55 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public class Healthbar : MonoBehaviour
 {
-    private GameObject bar;
+    [SerializeField] private GameObject anchor;
+    [SerializeField] private SpriteRenderer barRenderer;
+    [SerializeField] private TextMesh damageText;
+    [SerializeField] private TextMesh healthText;
 
-    public void Initialize(Vector3 position)
+    public void Initialize(Vector3 position, Color color)
     {
-        GameObject barObject = Instantiate(Resources.Load<GameObject>("Prefabs/UI/Healthbar_bar"));
-        barObject.transform.parent = transform;
-        barObject.transform.position = position;
-        this.bar = barObject.transform.FindChild("Healthbar Anchor").gameObject;
+        transform.position = position;
+
+        barRenderer.color = color;
+
+        var t = damageText.GetComponent<AnimationExtension>();
+        t.OnAnimationFinished += () => { damageText.gameObject.SetActive(false); };
     }
 
-    public void SetHealthBar(float ratio)
+    public void SetHealthBar(int currentHealth, int maxHealth)
     {
-        var tempScale = bar.transform.localScale;
-        tempScale.x = ratio;
+        healthText.text = currentHealth + " / " + maxHealth;
 
-        bar.transform.localScale = tempScale;
+        var ratio = (float)currentHealth / maxHealth;
+        StartCoroutine(LerpScale(ratio));
+    }
+
+    public void ShowDamage(int damage)
+    {
+        var text = damage >= 0 ? "-" + damage : "+" + (damage*-1);
+
+        damageText.text = text;
+        damageText.gameObject.SetActive(true);
+        damageText.GetComponent<Animation>().Play();
+    }
+
+    private IEnumerator LerpScale(float xTargetScale)
+    {
+        var tempScale = anchor.transform.localScale;
+        tempScale.x = xTargetScale;
+
+        var endTime = Time.time + 0.5f;
+
+        while (Time.time < endTime)
+        {
+            anchor.transform.localScale = Vector3.Lerp(anchor.transform.localScale, tempScale, 5*Time.deltaTime);
+            
+            yield return null;
+        }
+
+        tempScale.x = xTargetScale;
+        anchor.transform.localScale = tempScale;
     }
 }

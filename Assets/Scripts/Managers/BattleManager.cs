@@ -5,17 +5,28 @@ using UnityEngine;
 
 public class BattleManager : MonoBehaviour
 {
+    // Singleton reference to this class.
     public static BattleManager instance;
 
+    // DEBUG VARIABLES!
+    [SerializeField] private int amountOfEnemies = 1;
+    [SerializeField] private bool debugSpeed = false;
+    //
+
+    // The queue of actions that should be invoked in order and after their duration has passed.
     private Queue<BattleAction> battleActions;
     private float timeTillNextAction;
 
-    private Queue<Character> battleOrder;
-    private Character currentTurn;
+    // All the Characters engaged in battle.
+    private List<Character> characters;
 
-    private Character player;
-    private EnemyHorde enemies;
+    // The Character whose turn it is. This is used to find whose turn it is next.
+    private Character currentTurnCharacter;
 
+    // Where Characters can spawn.
+    [SerializeField] private List<SpawnPoint> spawnPoints;
+
+    // Whether the battle has started.
     private bool battleStarted;
 
     /// <summary>
@@ -23,140 +34,211 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void Awake()
     {
-        instance = this;
+        if (instance == null)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
 
         battleActions = new Queue<BattleAction>();
-        battleOrder = new Queue<Character>();
-
         battleStarted = false;
-
-        player = GameObject.FindWithTag("Player").GetComponent<Player>();
     }
+
+    // DEBUG
+    private void Start()
+    {
+        GlobalMessage.instance.BroadCastMessage("Press 'Space' to start a battle", -1);
+    } 
+    //
 
     /// <summary>
     /// Loads the enemies.
     /// </summary>
     public void LoadBattle( /*TODO: Pass the enemy parameters here*/)
     {
-        enemies = new EnemyHorde();
+        // TODO: Add friendly characters differently.
+        characters = new List<Character>();
 
-        for (int i = -1; i < 2; i++)
+        AddCharacterToBattle(GameObject.FindWithTag("Player").GetComponent<Character>());
+
+        for (var i = 0; i < amountOfEnemies; i++)
         {
             // Instantiate basic enemy.
-            GameObject e = Instantiate(Resources.Load<GameObject>("Prefabs/pf_enemy"));
-
-            // Set its position and parent.
-            var tempPosition = e.transform.position;
-            tempPosition.x += i * 2;
-            e.transform.position = tempPosition;
-            e.transform.parent = transform;
+            var enemyObject = Instantiate(Resources.Load<GameObject>("Prefabs/pf_enemy"), transform) as GameObject;
+            enemyObject.name = "Enemy " + i;
 
             // Add it to the horde.
-            enemies.AddEnemy(e.GetComponent<Enemy>());
+            AddCharacterToBattle(enemyObject.GetComponent<Character>());
         }
 
         battleStarted = true;
-
-        DequeueCharacter();
+        StartNextTurn();
     }
 
-    public void EnqueueAction(BattleAction action)
+    /// <summary>
+    /// Finds the first available SpawnPoint for the passed CharacterType. 
+    /// </summary>
+    /// <param name="type">The CharacterType to find a SpawnPoint for.</param>
+    /// <returns>The first available SpawnPoint.</returns>
+    private SpawnPoint GetSpawnPoint(Character.CharacterType type)
     {
-        battleActions.Enqueue(action);
-    }
-
-    public void DequeueCharacter()
-    {
-        if (battleOrder.Count <= 0)
+        if (!CanSpawn(type))
         {
-            EnqueueCharacters();
+            return null;
         }
-
-        currentTurn = battleOrder.Dequeue();
-        currentTurn.InitializeTurn();
+        
+        return spawnPoints.First(s => !s.taken && s.availableToCharactersOfType == type);
     }
 
-    private void EnqueueCharacters()
+    /// <summary>
+    /// Checks whether a spawnpoint is available.
+    /// </summary>
+    /// <param name="type">Which type of spawnpoint to check for.</param>
+    /// <returns>If there is a spawnpoint available.</returns>
+    public bool CanSpawn(Character.CharacterType type)
     {
-        List<Character> characters = new List<Character>();
-        characters.AddRange(enemies.enemies);
-        characters.Add(player);
+        return spawnPoints.FindAll(s => s.availableToCharactersOfType == type && !s.taken).Count > 0;
+    }
 
-        characters = characters.OrderBy(c => c.Stats.Speed).Reverse().ToList();
-        foreach (Character character in characters)
+    /// <summary>
+    /// Adds a character to the battle. The list is then sorted on character speed.
+    /// </summary>
+    /// <param name="character">The character to add to the battle.</param>
+    public void AddCharacterToBattle(Character character)
+    {
+        var spawnPoint = GetSpawnPoint(character.characterType);
+        
+        // If a SpawnPoint is available, add the character to the battle:
+        if (spawnPoint != null)
         {
-            battleOrder.Enqueue(character);
+            character.SetSpawn(spawnPoint);
+            characters.Add(character);
+
+            characters = characters.OrderBy(c => c.Speed).Reverse().ToList();
+        }
+        // Else remove the character from existance:
+        else
+        {
+            Destroy(character.gameObject);
         }
     }
 
     /// <summary>
-    /// Fire the correct methods for the current TurnType.
+    /// Removes a Character from battle.
+    /// </summary>
+    /// <param name="character">The Character to remove.</param>
+    public void RemoveCharacterFromBattle(Character character)
+    {
+        characters.Remove(character);
+    }
+
+    /// <summary>
+    /// Adds a BattleAction at the end of the queue.
+    /// </summary>
+    /// <param name="action">The action to enqueue.</param>
+    public void EnqueueAction(BattleAction action)
+    {
+        battleActions.Enqueue(action);
+    }
+    
+    /// <summary>
+    /// Invokes the enqueued actions.
     /// </summary>
     private void Update()
     {
         if (!battleStarted)
         {
             // DEBUG!
-            if ((Input.GetKeyDown(KeyCode.Space) || (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)))
+            if (Input.GetKeyDown(KeyCode.Space) ||
+                (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began))
             {
                 LoadBattle();
+                GlobalMessage.instance.BroadCastMessage("Battle started!", 3);
             }
             //
-            
+
             return;
         }
 
-        if (battleActions.Count > 0 && Time.time >= timeTillNextAction)
+        // Find next action to perform.
+        if (battleActions.Count > 0 && (debugSpeed || Time.time >= timeTillNextAction))
         {
             var action = battleActions.Dequeue();
             action.method();
 
             timeTillNextAction = Time.time + action.duration;
         }
-        
-        if (currentTurn != null)
-        {
-            currentTurn.HandleTurn();
-        }
-        
-        TryEndBattle();
-        
-        // DEBUG!
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            GameManager.SaveFile("player.caster", new CharacterData(100, 50,50,75));
-            GameManager.SaveFile("enemy.caster", new CharacterData(100, 1, 50, 50));
-        }
-        //
+    }
+    
+    /// <summary>
+    /// Finds the next character up from the currentTurnCharacter in the list.
+    /// </summary>
+    private void StartNextTurn()
+    {
+        var index = (characters.FindIndex(c => c == currentTurnCharacter) + 1) % characters.Count;
+        currentTurnCharacter = characters[index];
+        currentTurnCharacter.InitializeTurn();
     }
 
     /// <summary>
-    /// Attacks all enemies.
+    /// Ends the turn and passes it onto the next character.
     /// </summary>
-    /// <param name="info">The attack to inflict on the enemies.</param>
-    public void AttackEnemies(AttackInfo info)
+    public void EndTurn()
     {
-        enemies.AttackEnemies(info);
+        DebugHelper.instance.AddMessage(string.Format("{0} ended their turn.", currentTurnCharacter.name));
+        EnqueueAction(new BattleAction(StartNextTurn, 0));
     }
 
-    public void AttackPlayer(AttackInfo info)
+    /// <summary>
+    /// Checks if either all allies have died, or all the enemies have died.
+    /// If so, the battle has ended.
+    /// </summary>
+    public void TryEndBattle()
     {
-        player.ReceiveAttack(info);
-    }
+        var allFriendlyDead = GetCharactersOfType(Character.CharacterType.Friendly)
+            .Aggregate(true, (current, friendly) => current & friendly.IsDead);
+        var allEnemyDead = GetCharactersOfType(Character.CharacterType.Enemy).Count == 0;
 
-    private void TryEndBattle()
-    {
-        if (!enemies.IsDead && !player.IsDead)
+        if (allEnemyDead || allFriendlyDead)
         {
-            return;
+            var whoDied = allEnemyDead ? "Foes" : "Allies";
+            DebugHelper.instance.AddMessage(string.Format("{0} have been slain. The battle has ended.", whoDied), 5);
+
+            battleActions.Clear();
+            currentTurnCharacter = null;
+            foreach (var spawnPoint in spawnPoints)
+            {
+                spawnPoint.taken = false;
+            }
+
+            // TODO: Remove summoned allies
+
+            battleStarted = false;
+
+            GameObject.FindWithTag("Player").GetComponent<Player>().Save();
         }
-        
-        battleOrder.Clear();
-        enemies.DestroyEnemies();
-
-        string whoDied = enemies.IsDead ? "Enemy" : "Player";
-        DebugHelper.instance.AddMessage(string.Format("{0} has died. The battle has ended", whoDied), 5);
-
-        battleStarted = false;
     }
+
+    /// <summary>
+    /// Returns a list of all the characters currently in the battle of the given type.
+    /// </summary>
+    /// <param name="type">The type to match the characters to.</param>
+    public List<Character> GetCharactersOfType(Character.CharacterType type)
+    {
+        return type == Character.CharacterType.All ? characters : characters.FindAll(c => c.characterType == type);
+    }
+}
+
+/// <summary>
+/// A nullable type for SpawnPoint information. This includes its position, availability and type.
+/// </summary>
+[Serializable]
+public class SpawnPoint
+{
+    public Transform transform;
+    public Character.CharacterType availableToCharactersOfType;
+    public bool taken;
 }

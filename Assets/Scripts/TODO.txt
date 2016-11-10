@@ -1,0 +1,2 @@
+Status Infliction:
+- Apply all inflictions always, or stop after death ? The former is how it works now.

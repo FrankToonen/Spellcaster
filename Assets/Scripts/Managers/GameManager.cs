@@ -1,6 +1,6 @@
-﻿using UnityEngine;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
@@ -8,7 +8,12 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
 
-    private void Start()
+    private const string EXTENSION = ".caster";
+
+    /// <summary>
+    /// Creates a singleton of this class.
+    /// </summary>
+    private void Awake()
     {
         if (instance == null)
         {
@@ -20,10 +25,48 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
         }
     }
-
+    
+    /// <summary>
+    /// Switches to the specified scene.
+    /// </summary>
+    /// <param name="sceneName">The name of the scene to load.</param>
     public void SwitchToScene(string sceneName)
     {
         UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName);
+    }
+
+    /// <summary>
+    /// Closes the game.
+    /// </summary>
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
+
+    /// <summary>
+    /// Creates an empty savefile.
+    /// </summary>
+    public void CreateNewSave()
+    {
+        var data = new CharacterData(100, 250, 50, 50, 50);
+        SaveFile(Player.FILENAME + "Stats", data);
+        SaveFile(Player.FILENAME + "Save", new PlayerSaveData(data.maxHealth, data.maxMana, new List<Item> {new HealthPotion(5), new ManaPotion(3)}));
+    }
+
+    /// <summary>
+    /// Deletes the savefile.
+    /// </summary>
+    public void DeleteSave()
+    {
+        DeleteFile(Player.FILENAME + "Stats");
+        DeleteFile(Player.FILENAME + "Save");
+
+        // Disable continue button.
+        var continueButton = FindObjectOfType<CheckForSave>();
+        if (continueButton != null)
+        {
+            continueButton.SetInteractable();
+        }
     }
 
     /// <summary>
@@ -35,12 +78,12 @@ public class GameManager : MonoBehaviour
     /// <param name="data">The data to save to the file.</param>
     public static void SaveFile<T>(string fileName, T data)
     {
-        BinaryFormatter bf = new BinaryFormatter();
-        FileStream file = File.Create(Application.persistentDataPath + "\\" + fileName);
+        var bf = new BinaryFormatter();
+        var file = File.Create(GetPath(fileName));
         bf.Serialize(file, data);
         file.Close();
 
-        Debug.Log(string.Format("The file \"{0}\" has been saved.", fileName));
+        DebugHelper.instance.AddMessage(string.Format("The file \"{0}\" has been saved.", fileName));
     }
 
     /// <summary>
@@ -52,19 +95,21 @@ public class GameManager : MonoBehaviour
     /// <returns>The loaded data of type T.</returns>
     public static T LoadFile<T>(string fileName)
     {
-        if (File.Exists(Application.persistentDataPath + "\\" + fileName))
+        var path = GetPath(fileName);
+        if (!File.Exists(path))
         {
-            BinaryFormatter bf = new BinaryFormatter();
-            FileStream file = File.Open(Application.persistentDataPath + "\\" + fileName, FileMode.Open);
-            T data = (T) bf.Deserialize(file);
-            file.Close();
-
-            Debug.Log(string.Format("The file \"{0}\" has been loaded.", fileName));
-
-            return data;
+            DebugHelper.instance.AddMessage(string.Format("The file \"{0}\" does not exist.", fileName));
+            throw new Exception(string.Format("The file \"{0}\" does not exist.", fileName));
         }
 
-        return default(T);
+        var bf = new BinaryFormatter();
+        var file = File.Open(path, FileMode.Open);
+        var data = (T) bf.Deserialize(file);
+        file.Close();
+
+        DebugHelper.instance.AddMessage(string.Format("The file \"{0}\" has been loaded.", fileName));
+
+        return data;
     }
 
     /// <summary>
@@ -73,10 +118,23 @@ public class GameManager : MonoBehaviour
     /// <param name="fileName">The name of the file to delete.</param>
     public static void DeleteFile(string fileName)
     {
-        if (File.Exists(Application.persistentDataPath + "\\" + fileName))
+        if (!FileExists(fileName))
         {
-            File.Delete(Application.persistentDataPath + "\\" + fileName);
-            Debug.Log(string.Format("The file \"{0}\" has been deleted.", fileName));
+            return;
         }
+        
+        var path = GetPath(fileName);
+        File.Delete(path);
+        DebugHelper.instance.AddMessage(string.Format("The file \"{0}\" has been deleted.", fileName));
+    }
+
+    public static bool FileExists(string fileName)
+    {
+        return File.Exists(GetPath(fileName));
+    }
+
+    private static string GetPath(string fileName)
+    {
+        return Application.persistentDataPath + "/" + fileName + EXTENSION;
     }
 }

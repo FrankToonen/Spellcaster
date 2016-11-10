@@ -1,18 +1,20 @@
 ﻿using System;
 
 [Serializable]
-public class CharacterData
+public struct CharacterData
 {
-    public float MaxHealth { get; private set; }
-    public float Strength { get; private set; }
-    public float Intelligence { get; private set; }
-    public float Speed { get; private set; }
+    public int maxHealth;
+    public int maxMana;
+    public int strength;
+    public int intelligence;
+    public int speed;
 
-    public CharacterData(float maxHealth, float str, float inte, float speed)
+    public CharacterData(int maxHealth, int maxMana, int str, int inte, int speed)
     {
-        MaxHealth = maxHealth;
-        Strength = str;
-        Intelligence = inte;
-        Speed = speed;
+        this.maxHealth = maxHealth;
+        this.maxMana = maxMana;
+        strength = str;
+        intelligence = inte;
+        this.speed = speed;
     }
 }

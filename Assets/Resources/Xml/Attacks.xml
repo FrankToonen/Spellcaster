@@ -1,0 +1,91 @@
+<AttackContainer>
+  <Attacks>
+    <AttackInfo>
+      <name>Fireball</name>
+      <text>Deal {0} damage to one enemy</text>
+      <manaCost>40</manaCost>
+      <damage>60</damage>
+      <targetType>SingleEnemy</targetType>
+    </AttackInfo>
+    <AttackInfo>
+      <name>Moonfire</name>
+      <text>Deal {0} damage to one enemy</text>
+      <manaCost>0</manaCost>
+      <damage>10</damage>
+      <targetType>SingleEnemy</targetType>
+    </AttackInfo>
+    <AttackInfo>
+      <name>Flamestrike</name>
+      <text>Deal {0} damage to all enemies</text>
+      <manaCost>70</manaCost>
+      <damage>40</damage>
+      <targetType>AllEnemy</targetType>
+    </AttackInfo>
+    <AttackInfo>
+      <name>Healing touch</name>
+      <text>Restore {0} health to an ally</text>
+      <manaCost>30</manaCost>
+      <damage>80</damage>
+      <targetType>SingleFriendly</targetType>
+    </AttackInfo>
+    <AttackInfo>
+      <name>Hellfire</name>
+      <text>Deal {0} damage to all characters</text>
+      <manaCost>40</manaCost>
+      <damage>30</damage>
+      <targetType>Everyone</targetType>
+    </AttackInfo>
+    <AttackInfo>
+      <name>Summon skeleton</name>
+      <text>Summon a skeleton</text>
+      <manaCost>0</manaCost>
+      <damage>0</damage>
+      <targetType>None</targetType>
+    </AttackInfo>
+    <AttackInfo>
+      <name>Frostbolt</name>
+      <text>Deal {0} damage to an enemy and freeze it for one turn</text>
+      <manaCost>20</manaCost>
+      <damage>30</damage>
+      <targetType>SingleEnemy</targetType>
+      <inflictionInfo>
+        <inflictionType>Freeze</inflictionType>
+        <inflictionDuration>1</inflictionDuration>
+      </inflictionInfo>
+    </AttackInfo>
+    <AttackInfo>
+      <name>Poison fang</name>
+      <text>Deal {0} damage and poison ({0}) an enemy for three turns</text>
+      <manaCost>100</manaCost>
+      <damage>30</damage>
+      <targetType>SingleEnemy</targetType>
+      <inflictionInfo>
+        <inflictionType>Poison</inflictionType>
+        <inflictionDamage>10</inflictionDamage>
+        <inflictionDuration>3</inflictionDuration>
+      </inflictionInfo>
+    </AttackInfo>
+    <AttackInfo>
+      <name>Mana well</name>
+      <text>All allies gains +{0} mana for three turns</text>
+      <manaCost>100</manaCost>
+      <targetType>AllFriendly</targetType>
+      <inflictionInfo>
+        <inflictionType>ManaHeal</inflictionType>
+        <inflictionDamage>50</inflictionDamage>
+        <inflictionDuration>3</inflictionDuration>
+      </inflictionInfo>
+    </AttackInfo>
+    <AttackInfo>
+      <name>Healing mist</name>
+      <text>All allies gains +{0} health for three turns</text>
+      <manaCost>100</manaCost>
+      <targetType>AllFriendly</targetType>
+      <inflictionInfo>
+        <inflictionType>HealthHeal</inflictionType>
+        <inflictionDamage>50</inflictionDamage>
+        <inflictionDuration>3</inflictionDuration>
+      </inflictionInfo>
+    </AttackInfo>
+  </Attacks>
+</AttackContainer>
