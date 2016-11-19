@@ -37,10 +37,7 @@ public class Player : Character
         stats = saveData.stats;
         Health = saveData.currentHealth;
         Mana = saveData.currentMana;
-        foreach (var item in saveData.currentInventoryItems)
-        {
-            inventory.AddItem(item);
-        }
+        inventory = saveData.currentInventory;
     }
 
     /// <summary>
@@ -66,7 +63,7 @@ public class Player : Character
     /// </summary>
     public void Save()
     {
-        GameManager.SaveFile(FILENAME + "Save", new PlayerSaveData(stats, Health, Mana, inventory.items));
+        GameManager.SaveFile(FILENAME + "Save", new PlayerSaveData(stats, Health, Mana, inventory));
     }
 }
 
@@ -80,13 +77,13 @@ public struct PlayerSaveData
     public CharacterData stats;
     public int currentHealth;
     public int currentMana;
-    public List<Item> currentInventoryItems;
+    public Inventory currentInventory;
 
-    public PlayerSaveData(CharacterData stats, int currentHealth, int currentMana, List<Item> currentInventoryItems)
+    public PlayerSaveData(CharacterData stats, int currentHealth, int currentMana, Inventory currentInventory)
     {
         this.stats = stats;
         this.currentHealth = currentHealth;
         this.currentMana = currentMana;
-        this.currentInventoryItems = currentInventoryItems;
+        this.currentInventory = currentInventory;
     }
 }

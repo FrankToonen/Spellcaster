@@ -35,7 +35,11 @@ public class GameManager : MonoBehaviour
     {
         var data = new CharacterData(100, 250, 50, 50, 50);
         SaveFile(Player.FILENAME + "Stats", data);
-        SaveFile(Player.FILENAME + "Save", new PlayerSaveData(data, data.maxHealth, data.maxMana, new List<Item> {new HealthPotion(5), new ManaPotion(3)}));
+
+        var newInventory = new Inventory();
+        newInventory.AddItem(new HealthPotion(5));
+        newInventory.AddItem(new ManaPotion(3));
+        SaveFile(Player.FILENAME + "Save", new PlayerSaveData(data, data.maxHealth, data.maxMana, newInventory));
     }
 
     /// <summary>
