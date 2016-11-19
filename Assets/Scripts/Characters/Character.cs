@@ -84,6 +84,10 @@ public abstract class Character : MonoBehaviour
         Mana = stats.maxMana;
     }
 
+    /// <summary>
+    /// Sets the spawnpoint for this Character.
+    /// </summary>
+    /// <param name="spawnPoint">The spawnpoint to set this Character to.</param>
     public void SetSpawn(SpawnPoint spawnPoint)
     {
         transform.position = spawnPoint.transform.position;
@@ -107,6 +111,9 @@ public abstract class Character : MonoBehaviour
 
     protected abstract void StartTurn();
 
+    /// <summary>
+    /// Iterates over each StatusInfliction inflicted on this Character and applies them.
+    /// </summary>
     private void HandleInflictions()
     {
         foreach (var infliction in statusInflictions)
@@ -173,7 +180,7 @@ public abstract class Character : MonoBehaviour
     {
         var targetPosition = targets[0].transform.position;
         targetPosition.y = 3;
-        var controlPoints = new List<Vector2> {transform.position, targetPosition};
+        var controlPoints = new List<Vector2> {transform.position, transform.position, targetPosition, targetPosition};
 
         var scaleCurve = new AnimationCurve(new Keyframe(0, 0.5f));
 

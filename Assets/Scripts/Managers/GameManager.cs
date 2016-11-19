@@ -4,27 +4,12 @@ using UnityEngine;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
+/// <summary>
+/// A manager script that handles scene switching and file management.
+/// </summary>
 public class GameManager : MonoBehaviour
 {
-    public static GameManager instance;
-
     private const string EXTENSION = ".caster";
-
-    /// <summary>
-    /// Creates a singleton of this class.
-    /// </summary>
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            DontDestroyOnLoad(gameObject);
-            instance = this;
-        }
-        else if (instance != this)
-        {
-            Destroy(gameObject);
-        }
-    }
     
     /// <summary>
     /// Switches to the specified scene.
@@ -50,7 +35,7 @@ public class GameManager : MonoBehaviour
     {
         var data = new CharacterData(100, 250, 50, 50, 50);
         SaveFile(Player.FILENAME + "Stats", data);
-        SaveFile(Player.FILENAME + "Save", new PlayerSaveData(data.maxHealth, data.maxMana, new List<Item> {new HealthPotion(5), new ManaPotion(3)}));
+        SaveFile(Player.FILENAME + "Save", new PlayerSaveData(data, data.maxHealth, data.maxMana, new List<Item> {new HealthPotion(5), new ManaPotion(3)}));
     }
 
     /// <summary>
@@ -128,11 +113,20 @@ public class GameManager : MonoBehaviour
         DebugHelper.instance.AddMessage(string.Format("The file \"{0}\" has been deleted.", fileName));
     }
 
+    /// <summary>
+    /// Finds if the given file exists.
+    /// </summary>
+    /// <param name="fileName">The name of the file to check its existance of.</param>
     public static bool FileExists(string fileName)
     {
         return File.Exists(GetPath(fileName));
     }
 
+    /// <summary>
+    /// Gets the path to the given file.
+    /// </summary>
+    /// <param name="fileName">The name of the file to get its path of.</param>
+    /// <returns>The path to the file.</returns>
     private static string GetPath(string fileName)
     {
         return Application.persistentDataPath + "/" + fileName + EXTENSION;

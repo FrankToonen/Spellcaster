@@ -4,14 +4,14 @@ using UnityEngine;
 
 public class Player : Character
 {
-    [SerializeField] private CameraAnimationInfo test;
-
     public const string FILENAME = "Player";
-
-    [SerializeField] private PlayerTurnMenu attackUI;
     
-    private List<Item> items = new List<Item>();
+    [SerializeField] private PlayerTurnMenu attackUI;
+    private Inventory inventory = new Inventory();
 
+    /// <summary>
+    /// Opens the PlayerTurnMenu which allows the player to choose an attack.
+    /// </summary>
     protected override void StartTurn()
     {
         if (!canAttack)
@@ -22,80 +22,71 @@ public class Player : Character
         BattleManager.instance.EnqueueAction(new BattleAction(() => 
         {
             attackUI.CreateAttackButtons(attacks, this);
-            attackUI.CreateItemButtons(items);
+            attackUI.CreateItemButtons(inventory.items, this);
             attackUI.gameObject.SetActive(true);
         }, 0));
-
     }
-
-    // DEBUG
-    private void Start()
-    {
-        AddItem(new HealthPotion(5));
-        AddItem(new ManaPotion(3));
-    }       
-    //
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            CameraController.instance.PlayCameraAnimation(test);
-        }
-    }
-
+    
     /// <summary>
     /// Loads the character stats.
     /// TODO: Make a better save file for the player, including its inventory, health, mana and attacks.
     /// </summary>
     protected override void Reset()
     {
-        stats = GameManager.LoadFile<CharacterData>(FILENAME + "Stats");
-
         var saveData = GameManager.LoadFile<PlayerSaveData>(FILENAME + "Save");
+        stats = saveData.stats;
         Health = saveData.currentHealth;
         Mana = saveData.currentMana;
-        items = saveData.items;
+        foreach (var item in saveData.currentInventoryItems)
+        {
+            inventory.AddItem(item);
+        }
     }
 
+    /// <summary>
+    /// Adds an item to the player's inventory.
+    /// </summary>
+    /// <param name="item">The Item to add to the inventory.</param>
     public void AddItem(Item item)
     {
-        // Try increase the count if it already exists.
-        var existingItem = items.Find(i => i.name == item.name);
-        if (existingItem != null)
-        {
-            existingItem.amount += item.amount;
-        }
-        // Else add it as a new item.
-        else
-        {
-            items.Add(item);
-        }
+        inventory.AddItem(item);
     }
 
+    /// <summary>
+    /// Removes an item from the player's inventory.
+    /// </summary>
+    /// <param name="item">The Item to remove from the inventory.</param>
     public void RemoveItem(Item item)
     {
-        items.Remove(item);
+        inventory.RemoveItem(item);
     }
 
+    /// <summary>
+    /// Saves the state of the player character.
+    /// </summary>
     public void Save()
     {
-        GameManager.SaveFile(FILENAME + "Stats", stats);
-        GameManager.SaveFile(FILENAME + "Save", new PlayerSaveData(Health, Mana, items));
+        GameManager.SaveFile(FILENAME + "Save", new PlayerSaveData(stats, Health, Mana, inventory.items));
     }
 }
 
+/// <summary>
+/// The save data for the player.
+/// This includes their health, mana and inventory state.
+/// </summary>
 [Serializable]
 public struct PlayerSaveData
 {
+    public CharacterData stats;
     public int currentHealth;
     public int currentMana;
-    public List<Item> items;
+    public List<Item> currentInventoryItems;
 
-    public PlayerSaveData(int currentHealth, int currentMana, List<Item> items)
+    public PlayerSaveData(CharacterData stats, int currentHealth, int currentMana, List<Item> currentInventoryItems)
     {
+        this.stats = stats;
         this.currentHealth = currentHealth;
         this.currentMana = currentMana;
-        this.items = items;
+        this.currentInventoryItems = currentInventoryItems;
     }
 }

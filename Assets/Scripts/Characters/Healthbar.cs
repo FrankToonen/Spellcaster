@@ -8,6 +8,12 @@ public class Healthbar : MonoBehaviour
     [SerializeField] private TextMesh damageText;
     [SerializeField] private TextMesh healthText;
 
+    /// <summary>
+    /// Sets the position and color of the healthbar.
+    /// Also sets the damage text event.
+    /// </summary>
+    /// <param name="position">The position for the healthbar.</param>
+    /// <param name="color">The color of the bar.</param>
     public void Initialize(Vector3 position, Color color)
     {
         transform.position = position;
@@ -17,7 +23,12 @@ public class Healthbar : MonoBehaviour
         var t = damageText.GetComponent<AnimationExtension>();
         t.OnAnimationFinished += () => { damageText.gameObject.SetActive(false); };
     }
-
+    
+    /// <summary>
+    /// Sets the size of the healthbar based on the ratio of the given numbers.
+    /// </summary>
+    /// <param name="currentHealth">The health to display.</param>
+    /// <param name="maxHealth">The maximum health to determine the size of the bar from.</param>
     public void SetHealthBar(int currentHealth, int maxHealth)
     {
         healthText.text = currentHealth + " / " + maxHealth;
@@ -26,6 +37,10 @@ public class Healthbar : MonoBehaviour
         StartCoroutine(LerpScale(ratio));
     }
 
+    /// <summary>
+    /// Shows an animation of the amount of damage dealt.
+    /// </summary>
+    /// <param name="damage"></param>
     public void ShowDamage(int damage)
     {
         var text = damage >= 0 ? "-" + damage : "+" + (damage*-1);
@@ -35,6 +50,10 @@ public class Healthbar : MonoBehaviour
         damageText.GetComponent<Animation>().Play();
     }
 
+    /// <summary>
+    /// Lerp the scale of the healthbar to visually display the amount of health left.
+    /// </summary>
+    /// <param name="xTargetScale">The scale on the X-axis.</param>
     private IEnumerator LerpScale(float xTargetScale)
     {
         var tempScale = anchor.transform.localScale;

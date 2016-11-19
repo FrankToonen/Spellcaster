@@ -87,7 +87,7 @@ public abstract class SummonAttack : BaseAttack
         base.UseAttack(target);
 
         // Instantiate a new character and make it of the same type as the given target.
-        var instance = GameObject.Instantiate(summonPrefab, BattleManager.instance.transform) as GameObject;
+        var instance = GameObject.Instantiate(summonPrefab, BattleManager.instance.transform);
         var character = instance.GetComponent<Character>();
         character.characterType = target.characterType;
 

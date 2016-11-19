@@ -5,7 +5,7 @@ using UnityEngine;
 public class Enemy : Character
 {
     /// <summary>
-    /// TODO: AI decision making and shit.
+    /// TODO: AI decision making and stuff.
     /// </summary>
     protected override void StartTurn()
     {

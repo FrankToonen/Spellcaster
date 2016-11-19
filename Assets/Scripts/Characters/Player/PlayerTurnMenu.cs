@@ -4,8 +4,6 @@ using UnityEngine.UI;
 
 public class PlayerTurnMenu : MonoBehaviour
 {
-    public static PlayerTurnMenu instance;
-
     [SerializeField] private GameObject optionSelect;
     [SerializeField] private GameObject attackSelect;
     [SerializeField] private GameObject targetSelect;
@@ -22,21 +20,6 @@ public class PlayerTurnMenu : MonoBehaviour
     private Character attackingCharacter;
     private BaseAttack selectedAttack;
     private List<Character> selectedTargets;
-
-    /// <summary>
-    /// Create a singleton of this class.
-    /// </summary>
-    private void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-        }
-        else if (instance != this)
-        {
-            Destroy(gameObject);
-        }
-    }
     
     /// <summary>
     /// Opens on the correct menu.
@@ -48,6 +31,11 @@ public class PlayerTurnMenu : MonoBehaviour
         OpenMenu(optionSelect);
     }
 
+    /// <summary>
+    /// Creates the clickable buttons for selecting an attack.
+    /// </summary>
+    /// <param name="attacks">The attacks to create button for.</param>
+    /// <param name="user">The character that will perform the attacks.</param>
     public void CreateAttackButtons(BaseAttack[] attacks, Character user)
     {
         attackingCharacter = user;
@@ -79,7 +67,13 @@ public class PlayerTurnMenu : MonoBehaviour
         }
     }
 
-    public void CreateItemButtons(List<Item> items)
+    /// <summary>
+    /// Creates the clickable buttons for selecting an item to use.
+    /// TODO: This method is pretty much copy+paste of CreateAttackButtons. Maybe find a way to merge them.
+    /// </summary>
+    /// <param name="items">The list of Items to make buttons for.</param>
+    /// <param name="user">The character that will perform the attacks.</param>
+    public void CreateItemButtons(List<Item> items, Character user)
     {
         // Remove existing buttons to prevent duplicates.
         foreach (var button in itemButtons)
@@ -98,7 +92,7 @@ public class PlayerTurnMenu : MonoBehaviour
             var itemRef = item;
             button.onClick.AddListener(delegate
             {
-                itemRef.UseItem();
+                itemRef.UseItem(user);
                 BattleManager.instance.EndTurn();
                 gameObject.SetActive(false);
             });
@@ -110,7 +104,7 @@ public class PlayerTurnMenu : MonoBehaviour
     /// </summary>
     private static Button CreateButton(Transform parent, string buttonText)
     {
-        var buttonObject = Instantiate(Resources.Load<GameObject>("Prefabs/UI/Button"), parent) as GameObject;
+        var buttonObject = Instantiate(Resources.Load<GameObject>("Prefabs/UI/Button"), parent);
         buttonObject.transform.SetAsFirstSibling();
         buttonObject.transform.localScale = Vector3.one;
         buttonObject.GetComponentInChildren<Text>().text = buttonText;

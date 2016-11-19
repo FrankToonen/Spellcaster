@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// A class that handles the animation of the camera.
+/// </summary>
 public class CameraController : MonoBehaviour
 {
     public static CameraController instance;
@@ -61,12 +64,14 @@ public class CameraController : MonoBehaviour
         {
             // The interval should be a number between 0 and 1.
             var interval = ((Time.time - startTime) / animationInfo.duration) % 1;
-            interval = interval/timeBetweenPoints;
+            //interval = interval/timeBetweenPoints;
             
             // Set the scale and position at the given interval.
             // Set the z-position to a constant value to prevent it from getting behind objects.
-            var index = (int)interval;
-            transform.position = Vector3.Lerp(animationInfo.controlPoints[index], animationInfo.controlPoints[Mathf.Min(index + 1, animationInfo.controlPoints.Count-1)], interval);
+            var index1 = (int)(interval/timeBetweenPoints);
+            var index2 = Mathf.Min(index1 + 1, animationInfo.controlPoints.Count - 1);
+
+            transform.position = Vector3.Lerp(animationInfo.controlPoints[index1], animationInfo.controlPoints[index2], (interval*animationInfo.controlPoints.Count)%1);
             transform.position += new Vector3(0, 0, -10);
             cameraComponent.orthographicSize = animationInfo.scaleCurve.Evaluate(interval) * scaleScaler;
 
@@ -84,7 +89,7 @@ public class CameraController : MonoBehaviour
     /// <param name="animationInfo"></param>
     /// <param name="loop"></param>
     /// <returns></returns>
-    private IEnumerator PlayAnimation(CameraAnimationInfo animationInfo, bool loop)
+    private IEnumerator PlayAnimationSpline(CameraAnimationInfo animationInfo, bool loop)
     {
         var startTime = Time.time;
         var endTime = Time.time + animationInfo.duration;

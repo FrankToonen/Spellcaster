@@ -1,5 +1,8 @@
 ﻿using System;
 
+/// <summary>
+/// A factory that generates attacks to be used by Characters.
+/// </summary>
 public class AttackFactory
 {
     public static BaseAttack GetAttack(string name)

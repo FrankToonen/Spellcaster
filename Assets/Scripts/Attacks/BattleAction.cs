@@ -1,5 +1,9 @@
 ﻿using System;
 
+/// <summary>
+/// An Action which lasts a duration. 
+/// Used to have the BattleManager wait while processing turns.
+/// </summary>
 public struct BattleAction
 {
     public Action method;

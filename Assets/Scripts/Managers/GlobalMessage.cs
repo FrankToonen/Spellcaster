@@ -9,6 +9,9 @@ public class GlobalMessage : MonoBehaviour
 
     private Text textComponent;
 
+    /// <summary>
+    /// Creates a singleton of this class.
+    /// </summary>
     private void Awake()
     {
         if (instance == null)
@@ -23,12 +26,23 @@ public class GlobalMessage : MonoBehaviour
         textComponent = GetComponent<Text>();
     }
 
-    public void BroadCastMessage(string messsage, float time)
+    /// <summary>
+    /// Shows a message on the screen on the Text-component attached to this object.
+    /// </summary>
+    /// <param name="message">The message to display.</param>
+    /// <param name="time">The duration to display the message for.</param>
+    public void BroadCastMessage(string message, float time)
     {
         StopAllCoroutines();
-        StartCoroutine(ShowMessage(messsage, time));
+        StartCoroutine(ShowMessage(message, time));
     }
 
+    /// <summary>
+    /// Shows a message on the screen for the given amount of time. 
+    /// -1 is a special case in which the text remains until the next BroadCastMessage call.
+    /// </summary>
+    /// <param name="message">The message to display.</param>
+    /// <param name="time">The duration to display the message for.</param>
     private IEnumerator ShowMessage(string message, float time)
     {
         textComponent.text = message;
