@@ -43,9 +43,47 @@ public class CameraController : MonoBehaviour
         }
 
         StopAllCoroutines();
-        StartCoroutine(PlayAnimation(animationInfo, loop));
+        StartCoroutine(PlayAnimationSimple(animationInfo, loop));
     }
-    
+
+    /// <summary>
+    /// Moves the camera in a straight line between the given points.
+    /// PLACEHOLDER?
+    /// </summary>
+    private IEnumerator PlayAnimationSimple(CameraAnimationInfo animationInfo, bool loop)
+    {
+        var startTime = Time.time;
+        var endTime = Time.time + animationInfo.duration;
+
+        var timeBetweenPoints = (float)animationInfo.duration/animationInfo.controlPoints.Count;
+
+        while (Time.time < endTime || loop)
+        {
+            // The interval should be a number between 0 and 1.
+            var interval = ((Time.time - startTime) / animationInfo.duration) % 1;
+            interval = interval/timeBetweenPoints;
+            
+            // Set the scale and position at the given interval.
+            // Set the z-position to a constant value to prevent it from getting behind objects.
+            var index = (int)interval;
+            transform.position = Vector3.Lerp(animationInfo.controlPoints[index], animationInfo.controlPoints[Mathf.Min(index + 1, animationInfo.controlPoints.Count-1)], interval);
+            transform.position += new Vector3(0, 0, -10);
+            cameraComponent.orthographicSize = animationInfo.scaleCurve.Evaluate(interval) * scaleScaler;
+
+            yield return null;
+        }
+
+        // Reset the position and scale.
+        transform.position = new Vector3(0, 0, 1) * transform.position.z;
+        cameraComponent.orthographicSize = scaleScaler;
+    }
+
+    /// <summary>
+    /// Uses DeCasteljau to create a spline across the given points.
+    /// </summary>
+    /// <param name="animationInfo"></param>
+    /// <param name="loop"></param>
+    /// <returns></returns>
     private IEnumerator PlayAnimation(CameraAnimationInfo animationInfo, bool loop)
     {
         var startTime = Time.time;
